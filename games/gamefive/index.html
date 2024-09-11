@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>newer Quiz 1.0</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #quiz-container {
+            width: 80%;
+            max-width: 800px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+        #start-menu, #end-screen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 2rem;
+            text-align: center;
+            display: none;
+        }
+        #start-menu {
+            background: #007bff;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        #end-screen {
+            background: #dc3545;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        button {
+            background: #007bff;
+            border: none;
+            color: #fff;
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 5px;
+            border-radius: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .question {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+        .options {
+            list-style: none;
+            padding: 0;
+        }
+        .option {
+            margin: 10px 0;
+            cursor: pointer;
+            padding: 10px;
+            background: #e9e9e9;
+            border-radius: 5px;
+        }
+        .option:hover {
+            background: #d0d0d0;
+        }
+        #next-button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 1rem;
+            background: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #next-button:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div id="start-menu">
+        <div>Bienvenue au Quiz</div>
+        <button onclick="startQuiz()">Démarrer le Quiz</button>
+    </div>
+    <div id="quiz-container">
+        <h1>Quiz</h1>
+        <div id="question-container" class="question"></div>
+        <ul id="options-container" class="options"></ul>
+        <button id="next-button" class="hidden">Suivant</button>
+    </div>
+    <div id="end-screen">
+        <div>Fin du Quiz</div>
+        <div id="score-text"></div>
+        <button onclick="restartQuiz()">Rejouer</button>
+    </div>
+    <script>
+        // Liste des questions (ajoutez plus de questions ici)
+        const questions = [
+            { question: "Quel est le capital de la France ?", options: ["Paris", "Londres", "Berlin", "Madrid"], answer: "Paris" },
+            { question: "Quel est l'élément chimique avec le symbole H ?", options: ["Hydrogène", "Hélium", "Carbone", "Oxygène"], answer: "Hydrogène" },
+            { question: "Qui a écrit 'Les Misérables' ?", options: ["Victor Hugo", "Émile Zola", "Gustave Flaubert", "Marcel Proust"], answer: "Victor Hugo" },
+            { question: "Quelle est la langue officielle du Brésil ?", options: ["Portugais", "Espagnol", "Anglais", "Français"], answer: "Portugais" },
+            { question: "Combien de continents y a-t-il sur Terre ?", options: ["5", "6", "7", "8"], answer: "7" },
+            { question: "Quel est le plus grand océan du monde ?", options: ["Pacifique", "Atlantique", "Indien", "Arctique"], answer: "Pacifique" },
+            { question: "Quel est le plus grand désert du monde ?", options: ["Sahara", "Gobi", "Antarctique", "Kalahari"], answer: "Antarctique" },
+            { question: "Quel est l'organe principal du système respiratoire ?", options: ["Cœur", "Poumons", "Foie", "Reins"], answer: "Poumons" },
+            { question: "Quelle est la planète la plus proche du Soleil ?", options: ["Mercure", "Vénus", "Terre", "Mars"], answer: "Mercure" },
+            { question: "Quel est le plus petit pays du monde ?", options: ["Vatican", "Monaco", "San Marino", "Liechtenstein"], answer: "Vatican" }
+            // Ajoutez ici jusqu'à 100 questions
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let isQuizRunning = false;
+
+        function startQuiz() {
+            document.getElementById('start-menu').style.display = 'none';
+            document.getElementById('quiz-container').style.display = 'block';
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const question = questions[currentQuestionIndex];
+            document.getElementById('question-container').textContent = question.question;
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+            question.options.forEach(option => {
+                const li = document.createElement('li');
+                li.textContent = option;
+                li.className = 'option';
+                li.onclick = () => selectOption(option);
+                optionsContainer.appendChild(li);
+            });
+            document.getElementById('next-button').classList.add('hidden');
+        }
+
+        function selectOption(selectedOption) {
+            const question = questions[currentQuestionIndex];
+            if (selectedOption === question.answer) {
+                score++;
+            }
+            document.getElementById('next-button').classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                loadQuestion();
+            } else {
+                showScore();
+            }
+        }
+
+        function showScore() {
+            document.getElementById('quiz-container').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'block';
+            const scoreText = `Vous avez répondu correctement à ${score} sur ${questions.length} questions.`;
+            document.getElementById('score-text').textContent = scoreText;
+        }
+
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            document.getElementById('end-screen').style.display = 'none';
+            document.getElementById('start-menu').style.display = 'block';
+        }
+
+        document.getElementById('next-button').onclick = nextQuestion;
+
+        // Afficher le menu de démarrage au chargement
+        document.getElementById('start-menu').style.display = 'block';
+    </script>
+</body>
+</html>
