@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>newer SNAKE</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000;
+        }
+        canvas {
+            background-color: #111;
+            border: 1px solid #fff;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        const box = 20;  // Taille d'un "bloc" du serpent et de la pomme
+        const canvasSize = 400;  // Taille du canevas
+        let snake = [{ x: 200, y: 200 }];  // Serpent commence au milieu du canevas
+        let direction = "RIGHT";  // Direction initiale du serpent
+        let food = spawnFood();  // Génère la première pomme
+        let score = 0;
+
+        document.addEventListener("keydown", changeDirection);
+
+        function drawGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);  // Nettoie le canevas
+            drawFood();
+            drawSnake();
+
+            let snakeX = snake[0].x;
+            let snakeY = snake[0].y;
+
+            // Déplace le serpent en fonction de la direction
+            if (direction === "LEFT") snakeX -= box;
+            if (direction === "UP") snakeY -= box;
+            if (direction === "RIGHT") snakeX += box;
+            if (direction === "DOWN") snakeY += box;
+
+            // Si le serpent mange la pomme
+            if (snakeX === food.x && snakeY === food.y) {
+                score++;
+                food = spawnFood();
+            } else {
+                snake.pop();  // Supprime la dernière cellule du serpent
+            }
+
+            // Ajoute une nouvelle tête au serpent
+            const newHead = { x: snakeX, y: snakeY };
+
+            // Fin du jeu si le serpent sort complètement du canevas
+            if (snakeX < -box || snakeX > canvasSize || snakeY < -box || snakeY > canvasSize || collision(newHead, snake)) {
+                clearInterval(game);
+                alert("Game Over! Score: " + score);
+                return;
+            }
+
+            snake.unshift(newHead);  // Ajoute la nouvelle tête au début du tableau du serpent
+
+            // Affiche le score
+            ctx.fillStyle = "#fff";
+            ctx.font = "20px Arial";
+            ctx.fillText("Score: " + score, 10, canvas.height - 10);
+        }
+
+        // Fonction pour dessiner le serpent
+        function drawSnake() {
+            ctx.fillStyle = "#00FF00";  // Couleur du serpent
+            snake.forEach(part => {
+                ctx.fillRect(part.x, part.y, box, box);
+            });
+        }
+
+        // Fonction pour générer de la nourriture aléatoirement
+        function spawnFood() {
+            return {
+                x: Math.floor(Math.random() * (canvas.width / box)) * box,
+                y: Math.floor(Math.random() * (canvas.height / box)) * box
+            };
+        }
+
+        // Fonction pour dessiner la nourriture
+        function drawFood() {
+            ctx.fillStyle = "#FF0000";  // Couleur de la nourriture
+            ctx.fillRect(food.x, food.y, box, box);
+        }
+
+        // Fonction pour détecter les collisions avec le corps du serpent
+        function collision(head, snake) {
+            for (let i = 0; i < snake.length; i++) {
+                if (head.x === snake[i].x && head.y === snake[i].y) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Fonction pour changer la direction du serpent
+        function changeDirection(event) {
+            if (event.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
+            if (event.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
+            if (event.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
+            if (event.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
+        }
+
+        const game = setInterval(drawGame, 150);  // Démarre le jeu à 200 ms d'intervalle (vitesse plus lente)
+    </script>
+</body>
+</html>
