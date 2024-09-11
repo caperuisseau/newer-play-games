@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>newer pong</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000;
+        }
+        canvas {
+            background-color: #111;
+            border: 1px solid #fff;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="pongCanvas" width="800" height="400"></canvas>
+    <script>
+        const canvas = document.getElementById("pongCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // Dimensions de la raquette
+        const paddleWidth = 10;
+        const paddleHeight = 100;
+        
+        // Initialisation des raquettes
+        const player = {
+            x: 0,
+            y: canvas.height / 2 - paddleHeight / 2,
+            width: paddleWidth,
+            height: paddleHeight,
+            color: "#00FF00",
+            dy: 5
+        };
+
+        const ai = {
+            x: canvas.width - paddleWidth,
+            y: canvas.height / 2 - paddleHeight / 2,
+            width: paddleWidth,
+            height: paddleHeight,
+            color: "#FF0000",
+            dy: 4  // Vitesse de l'IA
+        };
+
+        // Initialisation de la balle
+        const ball = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            radius: 8,
+            speed: 4,
+            dx: 4,
+            dy: 4,
+            color: "#FFFFFF"
+        };
+
+        // Fonction pour dessiner un rectangle (raquette)
+        function drawRect(x, y, width, height, color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, width, height);
+        }
+
+        // Fonction pour dessiner un cercle (balle)
+        function drawCircle(x, y, radius, color) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2, false);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        // Fonction pour dessiner le filet au centre
+        function drawNet() {
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fillRect(canvas.width / 2 - 1, 0, 2, canvas.height);
+        }
+
+        // Fonction pour dessiner tout sur le canevas
+        function draw() {
+            // Nettoie le canevas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            drawNet();
+            drawRect(player.x, player.y, player.width, player.height, player.color);
+            drawRect(ai.x, ai.y, ai.width, ai.height, ai.color);
+            drawCircle(ball.x, ball.y, ball.radius, ball.color);
+        }
+
+        // Fonction pour détecter les collisions de la balle avec les raquettes
+        function collision(ball, paddle) {
+            return ball.x < paddle.x + paddle.width &&
+                   ball.x + ball.radius > paddle.x &&
+                   ball.y < paddle.y + paddle.height &&
+                   ball.y + ball.radius > paddle.y;
+        }
+
+        // Fonction pour déplacer la balle et gérer la collision
+        function moveBall() {
+            ball.x += ball.dx;
+            ball.y += ball.dy;
+
+            // Collision avec les murs haut et bas
+            if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
+                ball.dy *= -1;
+            }
+
+            // Collision avec la raquette du joueur
+            if (collision(ball, player)) {
+                ball.dx *= -1;
+            }
+
+            // Collision avec la raquette de l'IA
+            if (collision(ball, ai)) {
+                ball.dx *= -1;
+            }
+
+            // Marquer un point et réinitialiser la balle si elle dépasse le côté du joueur
+            if (ball.x - ball.radius < 0) {
+                resetBall();
+            }
+
+            // Marquer un point et réinitialiser la balle si elle dépasse le côté de l'IA
+            if (ball.x + ball.radius > canvas.width) {
+                resetBall();
+            }
+        }
+
+        // Fonction pour réinitialiser la balle
+        function resetBall() {
+            ball.x = canvas.width / 2;
+            ball.y = canvas.height / 2;
+            ball.dx = -ball.dx;
+        }
+
+        // Fonction pour déplacer la raquette du joueur
+        function movePlayer(event) {
+            const key = event.key;
+            if (key === "ArrowUp" && player.y > 0) {
+                player.y -= player.dy;
+            } else if (key === "ArrowDown" && player.y < canvas.height - player.height) {
+                player.y += player.dy;
+            }
+        }
+
+        // Fonction pour déplacer la raquette de l'IA
+        function moveAI() {
+            if (ai.y + ai.height / 2 < ball.y) {
+                ai.y += ai.dy;
+            } else if (ai.y + ai.height / 2 > ball.y) {
+                ai.y -= ai.dy;
+            }
+        }
+
+        // Écouter les mouvements de l'utilisateur
+        document.addEventListener("keydown", movePlayer);
+
+        // Fonction principale pour mettre à jour le jeu
+        function update() {
+            moveBall();
+            moveAI();
+        }
+
+        // Fonction principale du jeu
+        function gameLoop() {
+            update();
+            draw();
+        }
+
+        // Démarrer le jeu à 50 FPS
+        setInterval(gameLoop, 1000 / 50);
+    </script>
+</body>
+</html>
