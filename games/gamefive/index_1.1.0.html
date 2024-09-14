@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz </title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        #quiz-container {
+            width: 80%;
+            max-width: 800px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            display: none;
+            position: relative;
+        }
+        #start-menu, #end-screen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 2rem;
+            text-align: center;
+            display: none;
+        }
+        #start-menu {
+            background: #007bff;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        #end-screen {
+            background: #dc3545;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        button {
+            background: #007bff;
+            border: none;
+            color: #fff;
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 5px;
+            border-radius: 5px;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+        button:hover {
+            background: #0056b3;
+            transform: scale(1.05);
+        }
+        button:active {
+            transform: scale(0.95);
+        }
+        .question {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            transition: opacity 0.5s ease;
+        }
+        .options {
+            list-style: none;
+            padding: 0;
+        }
+        .option {
+            margin: 10px 0;
+            cursor: pointer;
+            padding: 10px;
+            background: #e9e9e9;
+            border-radius: 5px;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+        .option:hover {
+            background: #d0d0d0;
+            transform: scale(1.02);
+        }
+        .correct {
+            background: #28a745;
+            color: #fff;
+        }
+        .incorrect {
+            background: #dc3545;
+            color: #fff;
+        }
+        #next-button, #skip-button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 1rem;
+            background: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+        #next-button:hover, #skip-button:hover {
+            background: #218838;
+            transform: scale(1.05);
+        }
+        #next-button:active, #skip-button:active {
+            transform: scale(0.95);
+        }
+        #progress-bar {
+            height: 10px;
+            background: #007bff;
+            border-radius: 5px;
+            margin: 10px 0;
+            transition: width 0.5s ease;
+        }
+        #time {
+            font-size: 1.2rem;
+            margin: 10px 0;
+            text-align: center;
+        }
+        #question-counter {
+            font-size: 1.2rem;
+            margin: 10px 0;
+            text-align: center;
+        }
+        .hidden {
+            display: none;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .fade-in {
+            animation: fadeIn 1s ease;
+        }
+        .flashing {
+            animation: flashing 1s infinite;
+        }
+        @keyframes flashing {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            max-width: 400px;
+        }
+        .modal-content button {
+            background: #dc3545;
+            border: none;
+            color: #fff;
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 10px;
+        }
+        .modal-content button:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div id="start-menu" class="fade-in">
+        <div>Bienvenue au Quiz</div>
+        <button onclick="startQuiz()">Démarrer le Quiz</button>
+    </div>
+    <div id="quiz-container" class="fade-in">
+        <h1>Newer Quiz</h1>
+        <div id="question-container" class="question"></div>
+        <ul id="options-container" class="options"></ul>
+        <div id="progress-bar"></div>
+        <div id="time">30</div>
+        <div id="question-counter"></div>
+        <button id="next-button" class="hidden">Suivant</button>
+        <button id="skip-button" class="hidden">Passer</button>
+    </div>
+    <div id="end-screen" class="fade-in">
+        <div id="end-message"></div>
+        <div id="score-text"></div>
+        <button onclick="confirmRestart()">Rejouer</button>
+    </div>
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div id="modal-text"></div>
+            <button onclick="closeModal()">Fermer</button>
+        </div>
+    </div>
+    <script>
+        // Liste des questions (ajoutez plus de questions ici)
+        const questions = [
+            { question: "Quel est le capital de la France ?", options: ["Paris", "Londres", "Berlin", "Madrid"], answer: "Paris" },
+            { question: "Quel est l'élément chimique avec le symbole H ?", options: ["Hydrogène", "Hélium", "Carbone", "Oxygène"], answer: "Hydrogène" },
+            { question: "Qui a écrit 'Les Misérables' ?", options: ["Victor Hugo", "Émile Zola", "Gustave Flaubert", "Marcel Proust"], answer: "Victor Hugo" },
+            { question: "Quelle est la langue officielle du Brésil ?", options: ["Portugais", "Espagnol", "Anglais", "Français"], answer: "Portugais" },
+            { question: "Combien de continents y a-t-il sur Terre ?", options: ["5", "6", "7", "8"], answer: "7" },
+            { question: "Quel est le plus grand océan du monde ?", options: ["Pacifique", "Atlantique", "Indien", "Arctique"], answer: "Pacifique" },
+            { question: "Quel est le plus grand désert du monde ?", options: ["Sahara", "Gobi", "Antarctique", "Kalahari"], answer: "Antarctique" },
+            { question: "Quel est l'organe principal du système respiratoire ?", options: ["Cœur", "Poumons", "Foie", "Reins"], answer: "Poumons" },
+            { question: "Quelle est la planète la plus proche du Soleil ?", options: ["Mercure", "Vénus", "Terre", "Mars"], answer: "Mercure" },
+            { question: "Quel est le plus petit pays du monde ?", options: ["Vatican", "Monaco", "San Marino", "Liechtenstein"], answer: "Vatican" },
+            { question: "Quel est l'élément chimique avec le symbole Na ?", options: ["Sodium", "Néon", "Nickel", "Nitrate"], answer: "Sodium" },
+            { question: "Quel est le plus haut sommet du monde ?", options: ["Everest", "Kilimandjaro", "Mont Blanc", "Elbrus"], answer: "Everest" },
+            { question: "Quelle est la monnaie du Japon ?", options: ["Yen", "Dollar", "Euro", "Won"], answer: "Yen" },
+            { question: "Quel est l'auteur de '1984' ?", options: ["George Orwell", "Aldous Huxley", "Ray Bradbury", "Margaret Atwood"], answer: "George Orwell" },
+            { question: "Quel est l'animal le plus rapide sur Terre ?", options: ["Guépard", "Lion", "Aigle", "Tigre"], answer: "Guépard" },
+            { question: "Quelle est la capitale de l'Italie ?", options: ["Rome", "Milan", "Venise", "Florence"], answer: "Rome" },
+            { question: "Combien de pays sont membres de l'Union Européenne ?", options: ["27", "28", "29", "30"], answer: "27" },
+            { question: "Quel est le plus grand animal terrestre ?", options: ["Éléphant", "Girafe", "Rhinocéros", "Hippopotame"], answer: "Éléphant" },
+            { question: "Quel est le plus grand lac d'eau douce ?", options: ["Lac Baïkal", "Lac Supérieur", "Lac Victoria", "Lac Ontario"], answer: "Lac Baïkal" },
+            { question: "Quel est le pays le plus peuplé du monde ?", options: ["Chine", "Inde", "États-Unis", "Brésil"], answer: "Chine" },
+            { question: "Quel est le plus grand pays en superficie ?", options: ["Russie", "Canada", "États-Unis", "Chine"], answer: "Russie" }
+            // Ajoutez ici jusqu'à 100 questions
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timeLeft = 30;
+        let timer;
+        let selectedOptions = new Set();
+        let stats = { correct: 0, incorrect: 0 };
+
+        function startQuiz() {
+            document.getElementById('start-menu').style.display = 'none';
+            document.getElementById('quiz-container').style.display = 'block';
+            loadQuestion();
+            startTimer();
+        }
+
+        function loadQuestion() {
+            selectedOptions.clear();
+            updateProgressBar();
+            const question = questions[currentQuestionIndex];
+            document.getElementById('question-container').textContent = question.question;
+            document.getElementById('question-counter').textContent = `Question ${currentQuestionIndex + 1} sur ${questions.length}`;
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+            question.options.forEach(option => {
+                const li = document.createElement('li');
+                li.textContent = option;
+                li.className = 'option';
+                li.onclick = () => selectOption(option);
+                optionsContainer.appendChild(li);
+            });
+            document.getElementById('next-button').classList.add('hidden');
+            document.getElementById('skip-button').classList.remove('hidden');
+        }
+
+        function selectOption(selectedOption) {
+            if (selectedOptions.has(selectedOption)) return;
+            selectedOptions.add(selectedOption);
+
+            const question = questions[currentQuestionIndex];
+            const options = document.querySelectorAll('.option');
+            options.forEach(option => {
+                option.onclick = null; // Disable further clicks
+            });
+
+            if (selectedOption === question.answer) {
+                score++;
+                document.querySelector(`.option:nth-child(${question.options.indexOf(selectedOption) + 1})`).classList.add('correct');
+                stats.correct++;
+                showModal("Bravo !", "Vous avez sélectionné la bonne réponse.");
+            } else {
+                document.querySelector(`.option:nth-child(${question.options.indexOf(selectedOption) + 1})`).classList.add('incorrect');
+                document.querySelector(`.option:nth-child(${question.options.indexOf(question.answer) + 1})`).classList.add('correct');
+                stats.incorrect++;
+                showModal("Dommage !", `La bonne réponse était ${question.answer}.`);
+            }
+            document.getElementById('next-button').classList.remove('hidden');
+            document.getElementById('skip-button').classList.add('hidden');
+            clearInterval(timer);
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                loadQuestion();
+                resetTimer();
+            } else {
+                showScore();
+            }
+        }
+
+        function skipQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                loadQuestion();
+                resetTimer();
+            } else {
+                showScore();
+            }
+        }
+
+        function showScore() {
+            clearInterval(timer);
+            document.getElementById('quiz-container').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'block';
+
+            const scoreText = `Vous avez répondu correctement à ${score} sur ${questions.length} questions.<br>Correctes: ${stats.correct}<br>Incorrectes: ${stats.incorrect}`;
+            document.getElementById('score-text').innerHTML = scoreText;
+
+            const endMessage = score >= 22 ? "merci de reporter ce bug":
+							   score >= 21 ? "PARFAIT!" :
+							   score >= 20 ? " A UNE QUESTION DU PARFAIT !!!":
+							   score >= 15 ? "presque parfait!":	
+							   score >= 8 ? "bon travail" :
+                               score >= 5 ? "Bof" :
+                               "Tu peux mieux faire...";
+            document.getElementById('end-message').textContent = endMessage;
+        }
+
+        function confirmRestart() {
+            if (confirm("Êtes-vous sûr de vouloir recommencer le quiz ?")) {
+                restartQuiz();
+            }
+        }
+
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            timeLeft = 30;
+            stats = { correct: 0, incorrect: 0 };
+            document.getElementById('end-screen').style.display = 'none';
+            document.getElementById('start-menu').style.display = 'block';
+        }
+
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('time').textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    nextQuestion();
+                }
+            }, 1000);
+        }
+
+        function resetTimer() {
+            timeLeft = 30;
+            document.getElementById('time').textContent = timeLeft;
+            clearInterval(timer);
+            startTimer();
+        }
+
+        function updateProgressBar() {
+            const progressBar = document.getElementById('progress-bar');
+            progressBar.style.width = `${(currentQuestionIndex / questions.length) * 100}%`;
+        }
+
+        function showModal(title, message) {
+            document.getElementById('modal-text').innerHTML = `<strong>${title}</strong><br>${message}`;
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        document.getElementById('next-button').onclick = nextQuestion;
+        document.getElementById('skip-button').onclick = skipQuestion;
+
+        // Afficher le menu de démarrage au chargement
+        document.getElementById('start-menu').style.display = 'block';
+    </script>
+</body>
+</html>
